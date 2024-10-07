@@ -181,7 +181,7 @@ class Sub2Json:
         return data
 
 
-def args_pars():
+def args_parse():
 
     parser = ArgumentParser(description="subscription to json")
 
@@ -216,7 +216,7 @@ def args_pars():
 
 
 def main():
-    args = args_pars()
+    args = args_parse()
 
     if args.rawcontent:
         data = open(args.rawcontent, "rb").read()
