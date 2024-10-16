@@ -16,7 +16,7 @@ import urllib
 import json
 import base64
 import requests
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 
 def base64_decode(data):
@@ -183,7 +183,21 @@ class Sub2Json:
 
 def args_parse():
 
-    parser = ArgumentParser(description="subscription to json")
+    example_commands = (
+        "Examples:\n\n"
+        "  # Download subscription data from (\033[1;34mURL\033[0m) and save to (\033[1;34mDIR\033[0m)\n"
+        "  \033[1;32m$ python3 sub2json.py -s https://xxxxxx?token=[REDACTED] -o ~/.cache\033[0m\n"
+        "\n"
+        "  # Use local subscription data from (\033[1;34mFILE\033[0m) and save to (\033[1;34mDIR\033[0m)\n"
+        "  \033[1;32m$ python3 sub2json.py -r ~/.cache/subscribe.data -o ~/.cache\033[0m\n"
+        "\n"
+    )
+
+    parser = ArgumentParser(
+        description="subscription to json",
+        epilog=example_commands,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
 
     parser.add_argument(
         "-s",
