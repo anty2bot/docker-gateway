@@ -24,14 +24,15 @@ setup_image() {
 }
 
 setup_container() {
-  if [ "$#" -lt "3" ]; then
-    echo "Usage: setup_container [name] [port] [FLAG]"
-    exit 1
+  if [ "$#" -lt "4" ]; then
+    echo "Usage: setup_container [name] [port] [FLAG] [FILE]"
+    return
   fi
 
   readonly local NAME="$1"
   readonly local PORT="$2"
   readonly local FLAG="$3"
+  readonly local TEMP_V2RAY_CONFIG_FILE="$4"
 
   readonly local CONTAINER_NAME="v2ray-$NAME"
   readonly local CONTAINER_HTTP_PORT="$PORT"
@@ -44,7 +45,11 @@ setup_container() {
     exit 0
   fi
 
-  mv /tmp/config.json $V2RAY_CONFIG_FILE
+  if ! [ -d "$(dirname $V2RAY_CONFIG_FILE)" ]; then
+    mkdir -p "$(dirname $V2RAY_CONFIG_FILE)"
+  fi
+
+  mv $TEMP_V2RAY_CONFIG_FILE $V2RAY_CONFIG_FILE
   if ! [ -f "$V2RAY_CONFIG_FILE" ]; then
     echo "$V2RAY_CONFIG_FILE is not found"
     exit 1
