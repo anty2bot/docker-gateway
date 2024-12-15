@@ -1,0 +1,104 @@
+---
+- name: Setup V2Ray on multiple servers
+  hosts: remote
+  vars:
+    status: "{{ status | default('on') }}"
+
+  vars_files:
+    - ~/.config/v2ray-config.yml
+
+  tasks:
+    - name: Initial Docker
+      when: status == 'init'
+      block:
+        - name: Copy setup-docker.sh into inventory_hostname
+          copy:
+            src: utils/setup-docker.sh
+            dest: /tmp/setup-docker.sh
+          delegate_to: "{{ inventory_hostname }}"
+
+        - name: Run setup-docker.sh
+          command: >
+            bash /tmp/setup-docker.sh install
+          delegate_to: "{{ inventory_hostname }}"
+          become: yes
+
+        - name: Clean setup-docker.sh
+          file:
+            path: /tmp/setup-docker.sh
+            state: absent
+          delegate_to: "{{ inventory_hostname }}"
+
+    - name: Update subscription
+      when: status == 'update'
+      block:
+        - name: Ensure directory exists for each subscription
+          file:
+            path: "{{ item.dir }}"
+            state: directory
+            mode: '0755'
+          delegate_to: localhost
+          loop: "{{ subscribe }}"
+
+        - name: Generate the config files locally
+          command: >
+            python3 ./utils/sub2json.py
+            -s "{{ item.url }}"
+            -o "{{ item.dir }}"
+          delegate_to: localhost
+          loop: "{{ subscribe }}"
+
+    - name: Generate config file
+      when: status == 'on'
+      block:
+        - name: Generate the config files locally
+          command: >
+            python3 ./utils/v2builder.py
+            -i {{ item.file }}
+            -o config_{{ item.country }}.json
+            --allow_lan
+            --http_port {{ item.port }}
+          delegate_to: localhost
+          loop: "{{ clusters }}"
+
+        - name: Copy the config files into inventory_hostname
+          copy:
+            src: config_{{ item.country }}.json
+            dest: /tmp/config_{{ item.country }}.json
+          delegate_to: "{{ inventory_hostname }}"
+          loop: "{{ clusters }}"
+
+        - name: Clean the local config files
+          file:
+            path: config_{{ item.country }}.json
+            state: absent
+          delegate_to: localhost
+          loop: "{{ clusters }}"
+
+    - name: Setup V2Ray
+      when: status in ['on', 'off']
+      block:
+        - name: Copy setup-v2ray.sh into inventory_hostname
+          copy:
+            src: utils/setup-v2ray.sh
+            dest: /tmp/setup-v2ray.sh
+          delegate_to: "{{ inventory_hostname }}"
+
+        - name: Setup V2Ray Docker if it's not ready
+          command: >
+            bash /tmp/setup-v2ray.sh
+          delegate_to: "{{ inventory_hostname }}"
+          become: yes
+
+        - name: Run setup-v2ray.sh
+          command: >
+            bash /tmp/setup-v2ray.sh {{ item.country }} {{ item.port }} {{ status }} /tmp/config_{{ item.country }}.json
+          delegate_to: "{{ inventory_hostname }}"
+          loop: "{{ clusters }}"
+          become: yes
+
+        - name: Clean setup-v2ray.sh
+          file:
+            path: /tmp/setup-v2ray.sh
+            state: absent
+          delegate_to: "{{ inventory_hostname }}"
