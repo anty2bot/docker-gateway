@@ -1,0 +1,22 @@
+subscribe:
+  - name: tom
+    url: https://xxx/subscribe?token=xxxxxxxxxxxxxxxxx
+    dir: ~/.cache
+
+clusters:
+  - name: num001
+    port: 30000
+    country: hk
+    file: ~/.cache/server06.json
+  - name: num002
+    port: 30010
+    country: jp
+    file: ~/.cache/server07.json
+  - name: num003
+    port: 30020
+    country: sg
+    file: ~/.cache/server08.json
+  - name: num004
+    port: 30030
+    country: us
+    file: ~/.cache/server09.json
