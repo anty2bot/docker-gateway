@@ -50,17 +50,6 @@ setup_container() {
     exit 1
   fi
 
-  if ! docker inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
-    echo "$DOCKER_IMAGE is not downloaded. Trying to pull the image..."
-
-    if docker pull "$DOCKER_IMAGE"; then
-      echo "$DOCKER_IMAGE has been successfully pulled."
-    else
-      echo "Failed to pull $DOCKER_IMAGE."
-      exit 1
-    fi
-  fi
-
   if ! [ "$(docker inspect --format '{{.Id}}' $DOCKER_IMAGE)" == "$DOCKER_IMAGE_SHA256" ]; then
     echo "$DOCKER_IMAGE is not valid"
     exit 1
