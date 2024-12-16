@@ -97,6 +97,14 @@
           loop: "{{ clusters }}"
           become: yes
 
+        - name: Generate clusters info
+          copy:
+            dest: "~/v2ray.{{ item.country }}"
+            content: |
+              {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ item.port }}
+          delegate_to: localhost
+          loop: "{{ clusters }}"
+
         - name: Clean setup-v2ray.sh
           file:
             path: /tmp/setup-v2ray.sh
