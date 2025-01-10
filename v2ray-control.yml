@@ -78,6 +78,19 @@
     - name: Setup V2Ray
       when: status in ['on', 'off']
       block:
+        - name: Check if v2fly.tar exists
+          stat:
+            path: v2fly.tar
+          delegate_to: localhost
+          register: v2fly_stat
+
+        - name: Copy v2fly.tar inoto inventory_hostname if it exists
+          copy:
+            src: v2fly.tar
+            dest: /tmp/v2fly.tar
+          delegate_to: "{{ inventory_hostname }}"
+          when: v2fly_stat.stat.exists
+
         - name: Copy setup-v2ray.sh into inventory_hostname
           copy:
             src: utils/setup-v2ray.sh

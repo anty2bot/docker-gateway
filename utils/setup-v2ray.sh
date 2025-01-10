@@ -3,11 +3,19 @@
 # Date: 2024-12-14
 # Description: This is a Shell script for Multi V2ray Start/Stop
 
-readonly DOCKER_IMAGE="docker.unsee.tech/v2fly/v2fly-core:v5.16.1"
+readonly DOCKER_IMAGE="v2fly/v2fly-core:v5.16.1"
 readonly DOCKER_IMAGE_SHA256="sha256:d1c717b3cc8c7602fdb89a886d0c7fc0cf8c1d973501101d5f5e86f1ec6dcccf"
 readonly V2RAY_CONFIG_FILE="/etc/v2ray/config.json"
 
 setup_image() {
+  if docker inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
+    return
+  fi
+
+  if [ -f /tmp/v2fly.tar ]; then
+    docker load < /tmp/v2fly.tar
+  fi
+
   if docker inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
     return
   fi
