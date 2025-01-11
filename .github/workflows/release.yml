@@ -1,6 +1,9 @@
 name: Create Release
 
 on:
+  push:
+    paths:
+      - VERSION
   workflow_dispatch: # Manual trigger
 
 jobs:
