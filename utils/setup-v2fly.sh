@@ -3,8 +3,9 @@
 # Date: 2025-01-11
 # Description: This is a Shell script for Multi V2Fly Start/Stop
 
-readonly V2FLY_IMAGE="$(cat v2fly.sha256 | awk '{print $1}')"
-readonly V2FLY_IMAGE_ID="$(cat v2fly.sha256 | awk '{print $2}')"
+readonly SCRIPT_PATH=$(dirname "$0")
+readonly V2FLY_IMAGE="$(cat $SCRIPT_PATH/v2fly.sha256 | awk '{print $1}')"
+readonly V2FLY_IMAGE_ID="$(cat $SCRIPT_PATH/v2fly.sha256 | awk '{print $2}')"
 
 readonly DOCKER_IMAGE="${V2FLY_IMAGE_NAME:-v2fly/v2fly-core:v5.16.1}"
 readonly DOCKER_IMAGE_ID="${V2FLY_IMAGE_ID:-sha256:d1c717b3cc8c7602fdb89a886d0c7fc0cf8c1d973501101d5f5e86f1ec6dcccf}"
@@ -66,7 +67,7 @@ setup_container() {
     exit 1
   fi
 
-  if ! [ "$(docker inspect --format '{{.Id}}' $DOCKER_IMAGE)" == "$DOCKER_IMAGE_SHA256" ]; then
+  if ! [ "$(docker inspect --format '{{.Id}}' $DOCKER_IMAGE)" == "$DOCKER_IMAGE_ID" ]; then
     echo "$DOCKER_IMAGE is not valid"
     exit 1
   fi
