@@ -32,6 +32,11 @@ cp ./example/v2fly-config.yml ~/.config/
 cp ./example/inventory ~/.config/
 ```
 
+[可选] 下载 docker 镜像
+```bash
+wget https://github.com/anty2bot/docker-gateway/releases/download/docker-gateway-$(cat VERSION)/v2fly-$(cat utils/v2fly.sha256 | awk -F '[: ]' '{print $2}').tar -O v2fly.tar
+```
+
 #### 2.2 编辑 Inventory 文件
 编辑 `~/.config/inventory` 文件，定义目标机器：
 ```ini

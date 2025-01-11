@@ -32,6 +32,11 @@ cp ./example/v2fly-config.yml ~/.config/
 cp ./example/inventory ~/.config/
 ```
 
+[optional] Download the docker image
+```bash
+wget https://github.com/anty2bot/docker-gateway/releases/download/docker-gateway-$(cat VERSION)/v2fly-$(cat utils/v2fly.sha256 | awk -F '[: ]' '{print $2}').tar -O v2fly.tar
+```
+
 #### 2.2 Edit Inventory File
 Edit the inventory file `~/.config/inventory` to define target machines:
 ```ini
