@@ -1,7 +1,7 @@
-# Ansible-Controlled V2Ray Proxy Cluster
+# Ansible-Controlled V2Fly Proxy Cluster
 
 ## Goal
-Simplify the deployment, update, and management of proxy services using Ansible to control V2Ray proxy clusters on target machines.
+Simplify the deployment, update, and management of proxy services using Ansible to control V2Fly proxy clusters on target machines.
 
 ## Setup
 
@@ -28,7 +28,7 @@ ansible --version
 Clone the repository and copy example configuration files:
 ```bash
 git clone https://github.com/anty2bot/docker-gateway.git && cd docker-gateway
-cp ./example/v2ray-config.yml ~/.config/
+cp ./example/v2fly-config.yml ~/.config/
 cp ./example/inventory ~/.config/
 ```
 
@@ -39,8 +39,8 @@ Edit the inventory file `~/.config/inventory` to define target machines:
 server01 ansible_host=<target ip> ansible_user=<target user>
 ```
 
-#### 2.3 Edit v2ray-config.yml
-Customize `~/.config/v2ray-config.yml` to define subscription and cluster information:
+#### 2.3 Edit v2fly-config.yml
+Customize `~/.config/v2fly-config.yml` to define subscription and cluster information:
 ```yaml
 subscribe:
   - name: tom
@@ -69,24 +69,24 @@ chmod 600 ~/.config/become_password.txt
 
 ### 1. Initialize Environment
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=init" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=init" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 2. Update Configuration
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=update" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=update" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 3. Start Cluster
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=on" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=on" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 4. View Cluster Information
 ```bash
-cat ~/v2ray.*
+cat ~/v2fly.*
 ```
 
 ### 5. Stop Cluster
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=off" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=off" --become-password-file ~/.config/become_password.txt

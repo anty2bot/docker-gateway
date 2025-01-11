@@ -1,11 +1,11 @@
 ---
-- name: Setup V2Ray on multiple servers
+- name: Setup V2Fly on multiple servers
   hosts: remote
   vars:
     status: "{{ status | default('on') }}"
 
   vars_files:
-    - ~/.config/v2ray-config.yml
+    - ~/.config/v2fly-config.yml
 
   tasks:
     - name: Initial Docker
@@ -75,7 +75,7 @@
           delegate_to: localhost
           loop: "{{ clusters }}"
 
-    - name: Setup V2Ray
+    - name: Setup V2Fly
       when: status in ['on', 'off']
       block:
         - name: Check if v2fly.tar exists
@@ -91,35 +91,47 @@
           delegate_to: "{{ inventory_hostname }}"
           when: v2fly_stat.stat.exists
 
-        - name: Copy setup-v2ray.sh into inventory_hostname
+        - name: Copy v2fly.sha256 into inventory_hostname
           copy:
-            src: utils/setup-v2ray.sh
-            dest: /tmp/setup-v2ray.sh
+            src: utils/v2fly.sha256
+            dest: /tmp/v2fly.sha256
           delegate_to: "{{ inventory_hostname }}"
 
-        - name: Setup V2Ray Docker if it's not ready
+        - name: Copy setup-v2fly.sh into inventory_hostname
+          copy:
+            src: utils/setup-v2fly.sh
+            dest: /tmp/setup-v2fly.sh
+          delegate_to: "{{ inventory_hostname }}"
+
+        - name: Setup V2Fly Docker if it's not ready
           command: >
-            bash /tmp/setup-v2ray.sh
+            bash /tmp/setup-v2fly.sh
           delegate_to: "{{ inventory_hostname }}"
           become: yes
 
-        - name: Run setup-v2ray.sh
+        - name: Run setup-v2fly.sh
           command: >
-            bash /tmp/setup-v2ray.sh {{ item.country }} {{ item.port }} {{ status }} /tmp/config_{{ item.country }}.json
+            bash /tmp/setup-v2fly.sh {{ item.country }} {{ item.port }} {{ status }} /tmp/config_{{ item.country }}.json
           delegate_to: "{{ inventory_hostname }}"
           loop: "{{ clusters }}"
           become: yes
 
         - name: Generate clusters info
           copy:
-            dest: "~/v2ray.{{ item.country }}"
+            dest: "~/v2fly.{{ item.country }}"
             content: |
               {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ item.port }}
           delegate_to: localhost
           loop: "{{ clusters }}"
 
-        - name: Clean setup-v2ray.sh
+        - name: Clean setup-v2fly.sh
           file:
-            path: /tmp/setup-v2ray.sh
+            path: /tmp/setup-v2fly.sh
+            state: absent
+          delegate_to: "{{ inventory_hostname }}"
+
+        - name: Clean v2fly.sha256
+          file:
+            path: /tmp/v2fly.sha256
             state: absent
           delegate_to: "{{ inventory_hostname }}"

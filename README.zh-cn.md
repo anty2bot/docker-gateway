@@ -1,7 +1,7 @@
-# 使用 Ansible 管理 V2Ray 代理集群
+# 使用 Ansible 管理 V2Fly 代理集群
 
 ## 目标
-通过 Ansible 控制目标机器上的 V2Ray 代理集群，简化代理服务的部署、更新和管理。
+通过 Ansible 控制目标机器上的 V2Fly 代理集群，简化代理服务的部署、更新和管理。
 
 ## 环境准备
 
@@ -28,7 +28,7 @@ ansible --version
 克隆仓库并复制示例配置文件：
 ```bash
 git clone https://github.com/anty2bot/docker-gateway.git && cd docker-gateway
-cp ./example/v2ray-config.yml ~/.config/
+cp ./example/v2fly-config.yml ~/.config/
 cp ./example/inventory ~/.config/
 ```
 
@@ -39,8 +39,8 @@ cp ./example/inventory ~/.config/
 server01 ansible_host=<目标 IP> ansible_user=<目标用户名>
 ```
 
-#### 2.3 编辑 v2ray-config.yml
-定制 `~/.config/v2ray-config.yml`，定义订阅信息和集群配置：
+#### 2.3 编辑 v2fly-config.yml
+定制 `~/.config/v2fly-config.yml`，定义订阅信息和集群配置：
 ```yaml
 subscribe:
   - name: tom
@@ -69,24 +69,24 @@ chmod 600 ~/.config/become_password.txt
 
 ### 1. 初始化环境
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=init" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=init" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 2. 更新配置
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=update" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=update" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 3. 启动集群
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=on" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=on" --become-password-file ~/.config/become_password.txt
 ```
 
 ### 4. 查看集群信息
 ```bash
-cat ~/v2ray.*
+cat ~/v2fly.*
 ```
 
 ### 5. 停止集群
 ```bash
-ansible-playbook -i ~/.config/inventory v2ray-control.yml -e "status=off" --become-password-file ~/.config/become_password.txt
+ansible-playbook -i ~/.config/inventory v2fly-control.yml -e "status=off" --become-password-file ~/.config/become_password.txt
