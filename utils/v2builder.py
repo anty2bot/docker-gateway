@@ -67,6 +67,25 @@ class ServerProtocolB(BaseServerProtocol):
         }
 
 
+class ServerProtocolC(BaseServerProtocol):
+    NAME = b"\x74\x72\x6f\x6a\x61\x6e".decode()
+
+    def settings(
+        self,
+    ):
+        return {
+            "servers": [
+                {
+                    "address": self.server_address,
+                    "method": self.server_method,
+                    "password": self.server_uuid,
+                    "port": self.server_port,
+                    "level": 1,
+                }
+            ]
+        }
+
+
 class configProjectV:
     def inbounds(self, allow_lan=True, port=10809):
         inbound_allow_lan = allow_lan
@@ -331,7 +350,7 @@ def load_server_config(data):
     assert isinstance(server_address, str)
     assert isinstance(server_protocol, str)
 
-    for server in [ServerProtocolA, ServerProtocolB]:
+    for server in [ServerProtocolA, ServerProtocolB, ServerProtocolC]:
         if server.NAME == server_protocol:
             print(f"Loading \033[1;32m{server_note}\033[0m server config")
             return server(server_address, int(server_port), server_uuid, server_method)

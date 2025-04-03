@@ -149,6 +149,48 @@ class ProtocolB:
         }
 
 
+class ProtocolC:
+    NAME = b"\x74\x72\x6f\x6a\x61\x6e\x3a\x2f\x2f".decode()
+    PROTOCOL = b"\x74\x72\x6f\x6a\x61\x6e".decode()
+
+    def _remove_code(self, text):
+        return re.compile(
+            "["
+            "\U0001F600-\U0001F64F"
+            "\U0001F300-\U0001F5FF"
+            "\U0001F680-\U0001F6FF"
+            "\U0001F1E0-\U0001F1FF"
+            "]+",
+            flags=re.UNICODE,
+        ).sub(r"", text)
+
+    def decode(self, link):
+        body = link.replace(self.NAME, "").replace("\r", "")
+
+        """
+        [uuid]@[addr]:[port]?[config]
+        """
+
+        uuid, addr, port, config, note = re.split(r"[@:?#]", body)
+
+        params = urllib.parse.parse_qs(config)
+
+        allowInsecure = bool(int(params.get("allowInsecure", ["0"])[0]))
+        peer = params.get("peer", [""])[0]
+        sni = params.get("sni", [""])[0]
+
+        return {
+            "uuid": uuid,
+            "port": port,
+            "addr": addr,
+            "protocol": self.PROTOCOL,
+            "note": self._remove_code(urllib.parse.unquote(note)),
+            "allowInsecure": allowInsecure,
+            "peer": peer,
+            "sni": sni,
+        }
+
+
 class Sub2Json:
     def __init__(self, data: bytes) -> None:
         self.__data = data
@@ -170,6 +212,7 @@ class Sub2Json:
         protocols = {
             ProtocolA.NAME: ProtocolA(),
             ProtocolB.NAME: ProtocolB(),
+            ProtocolC.NAME: ProtocolC(),
         }
 
         data = []
