@@ -15,14 +15,19 @@ class BaseServerProtocol:
         server_port: int,
         server_uuid: str,
         server_method: str,
+        server_data,
     ):
         self.server_address = server_address
         self.server_port = server_port
         self.server_uuid = server_uuid
         self.server_method = server_method
+        self.server_data = server_data
 
     def settings(self):
         raise NotImplementedError("Subclasses must implement settings method.")
+
+    def streamSettings(self):
+        raise NotImplementedError("Subclasses must implement streamSettings method.")
 
 
 class ServerProtocolA(BaseServerProtocol):
@@ -41,6 +46,9 @@ class ServerProtocolA(BaseServerProtocol):
                 }
             ]
         }
+
+    def streamSettings(self):
+        return {}
 
 
 class ServerProtocolB(BaseServerProtocol):
@@ -66,6 +74,9 @@ class ServerProtocolB(BaseServerProtocol):
             ]
         }
 
+    def streamSettings(self):
+        return {}
+
 
 class ServerProtocolC(BaseServerProtocol):
     NAME = b"\x74\x72\x6f\x6a\x61\x6e".decode()
@@ -77,12 +88,22 @@ class ServerProtocolC(BaseServerProtocol):
             "servers": [
                 {
                     "address": self.server_address,
-                    "method": self.server_method,
+                    "method": "",
                     "password": self.server_uuid,
                     "port": self.server_port,
                     "level": 1,
                 }
             ]
+        }
+
+    def streamSettings(self):
+        return {
+            "network": "tcp",
+            "security": "tls",
+            "tlsSettings": {
+                "allowInsecure": self.server_data.get("allowInsecure"),
+                "serverName": self.server_data.get("sni"),
+            },
         }
 
 
@@ -127,6 +148,7 @@ class configProjectV:
                 "tag": "proxy",
                 "protocol": protocol.NAME,
                 "settings": protocol.settings(),
+                "streamSettings": protocol.streamSettings(),
             }
         )
         data.append(
@@ -353,7 +375,9 @@ def load_server_config(data):
     for server in [ServerProtocolA, ServerProtocolB, ServerProtocolC]:
         if server.NAME == server_protocol:
             print(f"Loading \033[1;32m{server_note}\033[0m server config")
-            return server(server_address, int(server_port), server_uuid, server_method)
+            return server(
+                server_address, int(server_port), server_uuid, server_method, data
+            )
 
     print(f"Unsupport server protocol: {server_protocol}")
     exit(1)
