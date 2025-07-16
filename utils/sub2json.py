@@ -168,7 +168,9 @@ class ProtocolC:
         body = link.replace(self.NAME, "").replace("\r", "")
 
         """
-        [uuid]@[addr]:[port]?[config]
+        [uuid]@[addr]:[port]?[config]#[note]
+                              /  \
+                           item1 & item2 & ...
         """
 
         uuid, addr, port, config, note = re.split(r"[@:?#]", body)
@@ -187,6 +189,50 @@ class ProtocolC:
             "note": self._remove_code(urllib.parse.unquote(note)),
             "allowInsecure": allowInsecure,
             "peer": peer,
+            "sni": sni,
+        }
+
+
+class ProtocolD:
+    NAME = b"\x68\x79\x73\x74\x65\x72\x69\x61\x32\x3a\x2f\x2f".decode()
+    PROTOCOL = b"\x68\x79\x73\x74\x65\x72\x69\x61\x32".decode()
+
+    def _remove_code(self, text):
+        return re.compile(
+            "["
+            "\U0001F600-\U0001F64F"
+            "\U0001F300-\U0001F5FF"
+            "\U0001F680-\U0001F6FF"
+            "\U0001F1E0-\U0001F1FF"
+            "]+",
+            flags=re.UNICODE,
+        ).sub(r"", text)
+
+    def decode(self, link):
+        body = link.replace(self.NAME, "").replace("\r", "")
+
+        """
+        [uuid]@[addr]:[port]?[config]#[note]
+                              /  \
+                           item1 & item2 & ...
+        """
+
+        uuid, addr, port, config, note = re.split(r"[@:?#]", body)
+
+        params = urllib.parse.parse_qs(config)
+
+        insecure = bool(int(params.get("insecure", ["0"])[0]))
+        security = params.get("security", [""])[0]
+        sni = params.get("sni", [""])[0]
+
+        return {
+            "uuid": uuid,
+            "port": port,
+            "addr": addr,
+            "protocol": self.PROTOCOL,
+            "note": self._remove_code(urllib.parse.unquote(note)),
+            "insecure": insecure,
+            "security": security,
             "sni": sni,
         }
 
@@ -213,13 +259,22 @@ class Sub2Json:
             ProtocolA.NAME: ProtocolA(),
             ProtocolB.NAME: ProtocolB(),
             ProtocolC.NAME: ProtocolC(),
+            ProtocolD.NAME: ProtocolD(),
         }
 
         data = []
         for link in self._predecode():
+            found = False
             for name, obj in protocols.items():
                 if link.startswith(name):
+                    found = True
                     data.append(obj.decode(link))
+            if not found:
+                protocol, _ = re.split(r"://", link)
+                print(f"{protocol} is not implemented")
+                hex_str = ''.join(f'\\x{byte:02x}' for byte in protocol.encode('utf-8'))
+                print(f"NAME = b\"{hex_str}\\x3a\\x2f\\x2f\".decode()")
+                print(f"PROTOCOL = b\"{hex_str}\".decode()")
 
         return data
 
