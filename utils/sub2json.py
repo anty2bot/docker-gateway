@@ -237,6 +237,47 @@ class ProtocolD:
         }
 
 
+class ProtocolE:
+    NAME = b"\x76\x6c\x65\x73\x73\x3a\x2f\x2f".decode()
+    PROTOCOL = b"\x76\x6c\x65\x73\x73".decode()
+
+    def _remove_code(self, text):
+        return re.compile(
+            "["
+            "\U0001F600-\U0001F64F"
+            "\U0001F300-\U0001F5FF"
+            "\U0001F680-\U0001F6FF"
+            "\U0001F1E0-\U0001F1FF"
+            "]+",
+            flags=re.UNICODE,
+        ).sub(r"", text)
+
+    def decode(self, link):
+        body = link.replace(self.NAME, "").replace("\r", "")
+
+        """
+        [uuid]@[addr]:[port]?[config]#[note]
+                              /  \
+                           item1 & item2 & ...
+        """
+
+        uuid, addr, port, config, note = re.split(r"[@:?#]", body)
+
+        params = urllib.parse.parse_qs(config)
+
+        main = {
+            "uuid": uuid,
+            "port": port,
+            "addr": addr,
+            "protocol": self.PROTOCOL,
+            "note": self._remove_code(urllib.parse.unquote(note)),
+        }
+
+        main.update(params)
+
+        return main
+
+
 class Sub2Json:
     def __init__(self, data: bytes) -> None:
         self.__data = data
@@ -260,6 +301,7 @@ class Sub2Json:
             ProtocolB.NAME: ProtocolB(),
             ProtocolC.NAME: ProtocolC(),
             ProtocolD.NAME: ProtocolD(),
+            ProtocolE.NAME: ProtocolE(),
         }
 
         data = []
@@ -272,9 +314,9 @@ class Sub2Json:
             if not found:
                 protocol, _ = re.split(r"://", link)
                 print(f"{protocol} is not implemented")
-                hex_str = ''.join(f'\\x{byte:02x}' for byte in protocol.encode('utf-8'))
-                print(f"NAME = b\"{hex_str}\\x3a\\x2f\\x2f\".decode()")
-                print(f"PROTOCOL = b\"{hex_str}\".decode()")
+                hex_str = "".join(f"\\x{byte:02x}" for byte in protocol.encode("utf-8"))
+                print(f'NAME = b"{hex_str}\\x3a\\x2f\\x2f".decode()')
+                print(f'PROTOCOL = b"{hex_str}".decode()')
 
         return data
 
