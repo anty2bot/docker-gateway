@@ -5,6 +5,7 @@ subscribe:
 
 clients:
   - v2fly
+  - xray
 
 clusters:
   - name: num001
