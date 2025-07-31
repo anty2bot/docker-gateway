@@ -107,6 +107,72 @@ class ServerProtocolC(BaseServerProtocol):
         }
 
 
+class ServerProtocolE(BaseServerProtocol):
+    NAME = b"\x76\x6c\x65\x73\x73".decode()
+
+    def settings(self):
+        return {
+            "vnext": [
+                {
+                    "address": self.server_address,
+                    "port": self.server_port,
+                    "users": [
+                        {
+                            "id": self.server_uuid,
+                            "encryption": self.server_data.get("encryption")[0],
+                            "flow": (
+                                ""
+                                if self.server_data.get("flow") is None
+                                else self.server_data.get("flow")
+                            ),
+                        }
+                    ],
+                }
+            ]
+        }
+
+    def streamSettings(self):
+        network = self.server_data.get("type")[0]
+        security = self.server_data.get("security")[0]
+
+        assert network == "grpc", f"TODO: add more {network}"
+        assert security == "reality", f"TODO: add more {security}"
+
+        data = dict()
+
+        data.update({"network": network, "security": security})
+
+        if network == "grpc":
+            data.update(
+                {
+                    "grpcSettings": {
+                        "serviceName": self.server_data.get("serviceName")[0],
+                        "mulitMode": False,
+                        "idle_timeout": 60,
+                        "health_check_timeout": 20,
+                        "permit_without_stream": False,
+                        "initial_windows_size": 0,
+                    }
+                }
+            )
+
+        if security == "reality":
+            data.update(
+                {
+                    "realitySettings": {
+                        "show": False,
+                        "serverName": self.server_data.get("sni")[0],
+                        "fingerprint": self.server_data.get("fp")[0],
+                        "publicKey": self.server_data.get("pbk")[0],
+                        "shortId": self.server_data.get("sid")[0],
+                        "spiderX": "",
+                    }
+                }
+            )
+
+        return data
+
+
 class configProjectV:
     def inbounds(self, allow_lan=True, port=10809):
         inbound_allow_lan = allow_lan
@@ -372,7 +438,7 @@ def load_server_config(data):
     assert isinstance(server_address, str)
     assert isinstance(server_protocol, str)
 
-    for server in [ServerProtocolA, ServerProtocolB, ServerProtocolC]:
+    for server in [ServerProtocolA, ServerProtocolB, ServerProtocolC, ServerProtocolE]:
         if server.NAME == server_protocol:
             print(f"Loading \033[1;32m{server_note}\033[0m server config")
             return server(
