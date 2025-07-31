@@ -1,23 +1,35 @@
 #!/bin/bash
 # Author: Dot(anty2bot)
-# Date: 2025-01-11
-# Description: This is a Shell script for Multi V2Fly Start/Stop
+# Date: 2025-07-31
+# Description: Shell script to manage multiple proxy clients (V2Fly)
 
 readonly SCRIPT_PATH=$(dirname "$0")
-readonly V2FLY_IMAGE="$(cat $SCRIPT_PATH/v2fly.sha256 | awk '{print $1}')"
-readonly V2FLY_IMAGE_ID="$(cat $SCRIPT_PATH/v2fly.sha256 | awk '{print $2}')"
+readonly CLIENT="$1"
+readonly SHA256_DIR="$SCRIPT_PATH/sha256"
 
-readonly DOCKER_IMAGE="${V2FLY_IMAGE_NAME:-v2fly/v2fly-core:v5.16.1}"
-readonly DOCKER_IMAGE_ID="${V2FLY_IMAGE_ID:-sha256:d1c717b3cc8c7602fdb89a886d0c7fc0cf8c1d973501101d5f5e86f1ec6dcccf}"
-readonly V2FLY_CONFIG_FILE="/etc/v2fly/config.json"
+case "$CLIENT" in
+  "v2fly")
+    read -r IMAGE IMAGE_ID < "$SHA256_DIR/v2fly.sha256"
+    DOCKER_IMAGE="${IMAGE:-v2fly/v2fly-core:v5.16.1}"
+    DOCKER_IMAGE_ID="${IMAGE_ID:-sha256:d1c717b3cc8c7602fdb89a886d0c7fc0cf8c1d973501101d5f5e86f1ec6dcccf}"
+    CONFIG_FILE="/etc/v2fly/config.json"
+    ;;
+  *)
+    echo "Unsupported client: $CLIENT"
+    exit 1
+    ;;
+esac
+shift
+
+readonly DOCKER_IMAGE DOCKER_IMAGE_ID CONFIG_FILE
 
 setup_image() {
   if docker inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
     return
   fi
 
-  if [ -f /tmp/v2fly.tar ]; then
-    docker load < /tmp/v2fly.tar
+  if [ -f /tmp/$CLIENT.tar ]; then
+    docker load < /tmp/$CLIENT.tar
   fi
 
   if docker inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
@@ -44,9 +56,9 @@ setup_container() {
   readonly local NAME="$1"
   readonly local PORT="$2"
   readonly local FLAG="$3"
-  readonly local TEMP_V2FLY_CONFIG_FILE="$4"
+  readonly local TEMP_CONFIG_FILE="$4"
 
-  readonly local CONTAINER_NAME="v2fly-$NAME"
+  readonly local CONTAINER_NAME="$CLIENT-$NAME"
   readonly local CONTAINER_HTTP_PORT="$PORT"
   readonly local CONTAINER_SOCK_PORT="$(($PORT + 1))"
 
@@ -57,13 +69,13 @@ setup_container() {
     exit 0
   fi
 
-  if ! [ -d "$(dirname $V2FLY_CONFIG_FILE)" ]; then
-    mkdir -p "$(dirname $V2FLY_CONFIG_FILE)"
+  if ! [ -d "$(dirname $CONFIG_FILE)" ]; then
+    mkdir -p "$(dirname $CONFIG_FILE)"
   fi
 
-  mv $TEMP_V2FLY_CONFIG_FILE $V2FLY_CONFIG_FILE
-  if ! [ -f "$V2FLY_CONFIG_FILE" ]; then
-    echo "$V2FLY_CONFIG_FILE is not found"
+  mv $TEMP_CONFIG_FILE $CONFIG_FILE
+  if ! [ -f "$CONFIG_FILE" ]; then
+    echo "$CONFIG_FILE is not found"
     exit 1
   fi
 
@@ -74,13 +86,13 @@ setup_container() {
 
   docker run -d \
     --name "$CONTAINER_NAME" \
-    -v $V2FLY_CONFIG_FILE:$V2FLY_CONFIG_FILE \
+    -v $CONFIG_FILE:$CONFIG_FILE \
     -p $CONTAINER_HTTP_PORT:$CONTAINER_HTTP_PORT \
     -p $CONTAINER_SOCK_PORT:$CONTAINER_SOCK_PORT \
     $DOCKER_IMAGE \
-    run -c $V2FLY_CONFIG_FILE
+    run -c $CONFIG_FILE
 
-  rm $V2FLY_CONFIG_FILE
+  rm $CONFIG_FILE
 }
 
 setup_image

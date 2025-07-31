@@ -1,11 +1,11 @@
 ---
-- name: Setup V2Fly on multiple servers
+- name: Setup multiple clients on multiple servers
   hosts: remote
   vars:
     status: "{{ status | default('on') }}"
 
   vars_files:
-    - ~/.config/v2fly-config.yml
+    - ~/.config/multi-client-config.yml
 
   tasks:
     - name: Initial Docker
@@ -75,7 +75,7 @@
           delegate_to: localhost
           loop: "{{ clusters }}"
 
-    - name: Setup V2Fly
+    - name: Setup multiple proxy clients
       when: status in ['on', 'off']
       block:
         - name: Check if v2fly.tar exists
@@ -91,47 +91,57 @@
           delegate_to: "{{ inventory_hostname }}"
           when: v2fly_stat.stat.exists
 
-        - name: Copy v2fly.sha256 into inventory_hostname
+        - name: Copy sha256 files into inventory_hostname
           copy:
-            src: utils/v2fly.sha256
-            dest: /tmp/v2fly.sha256
+            src: utils/sha256/{{ item }}.sha256
+            dest: /tmp/{{ item }}.sha256
+          delegate_to: "{{ inventory_hostname }}"
+          loop: "{{ clients }}"
+
+        - name: Copy setup-multi-client.sh into inventory_hostname
+          copy:
+            src: utils/setup-multi-client.sh
+            dest: /tmp/setup-multi-client.sh
           delegate_to: "{{ inventory_hostname }}"
 
-        - name: Copy setup-v2fly.sh into inventory_hostname
-          copy:
-            src: utils/setup-v2fly.sh
-            dest: /tmp/setup-v2fly.sh
-          delegate_to: "{{ inventory_hostname }}"
-
-        - name: Setup V2Fly Docker if it's not ready
+        - name: Setup multi clients Docker if it's not ready
           command: >
-            bash /tmp/setup-v2fly.sh
+            bash /tmp/setup-multi-client.sh {{ item }}
           delegate_to: "{{ inventory_hostname }}"
+          loop: "{{ clients }}"
           become: yes
 
-        - name: Run setup-v2fly.sh
+        - name: Assert client is in allowed clients
+          assert:
+            that:
+              - item.client in clients
+            fail_msg: "Invalid client: {{ item.client }}. Must be one of {{ clients }}."
+          loop: "{{ clusters }}"
+        
+        - name: Run setup-multi-client.sh
           command: >
-            bash /tmp/setup-v2fly.sh {{ item.country }} {{ item.port }} {{ status }} /tmp/config_{{ item.country }}.json
+            bash /tmp/setup-multi-client.sh {{ item.client }} {{ item.country }} {{ item.port }} {{ status }} /tmp/config_{{ item.country }}.json
           delegate_to: "{{ inventory_hostname }}"
           loop: "{{ clusters }}"
           become: yes
 
         - name: Generate clusters info
           copy:
-            dest: "~/v2fly.{{ item.country }}"
+            dest: "~/proxy.{{ item.country }}"
             content: |
               {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ item.port }}
           delegate_to: localhost
           loop: "{{ clusters }}"
 
-        - name: Clean setup-v2fly.sh
+        - name: Clean setup-multi-client.sh
           file:
-            path: /tmp/setup-v2fly.sh
+            path: /tmp/setup-multi-client.sh
             state: absent
           delegate_to: "{{ inventory_hostname }}"
 
-        - name: Clean v2fly.sha256
+        - name: Clean sha256 files
           file:
-            path: /tmp/v2fly.sha256
+            path: /tmp/{{ item }}.sha256
             state: absent
           delegate_to: "{{ inventory_hostname }}"
+          loop: "{{ clients }}"

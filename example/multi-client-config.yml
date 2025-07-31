@@ -3,20 +3,27 @@ subscribe:
     url: https://xxx/subscribe?token=xxxxxxxxxxxxxxxxx
     dir: ~/.cache
 
+clients:
+  - v2fly
+
 clusters:
   - name: num001
+    client: v2fly
     port: 30000
     country: hk
     file: ~/.cache/server06.json
   - name: num002
+    client: v2fly
     port: 30010
     country: jp
     file: ~/.cache/server07.json
   - name: num003
+    client: v2fly
     port: 30020
     country: sg
     file: ~/.cache/server08.json
   - name: num004
+    client: v2fly
     port: 30030
     country: us
     file: ~/.cache/server09.json
