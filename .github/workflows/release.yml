@@ -19,8 +19,10 @@ jobs:
         run: |
          TAG_NAME=$(cat VERSION)
          echo "::set-output name=tag_name::$TAG_NAME"
-         V2FLY_TAG_NAME=$(cat utils/v2fly.sha256 | awk -F '[: ]' '{print $2}')
+         V2FLY_TAG_NAME=$(cat utils/sha256/v2fly.sha256 | awk -F '[: ]' '{print $2}')
          echo "::set-output name=v2fly_tag_name::$V2FLY_TAG_NAME"
+         XRAY_TAG_NAME=$(cat utils/sha256/xray.sha256 | awk -F '[: ]' '{print $2}')
+         echo "::set-output name=xray_tag_name::$XRAY_TAG_NAME"
 
       - name: Create GitHub Release
         id: create_release
@@ -29,23 +31,38 @@ jobs:
           tag_name: docker-gateway-${{  steps.set_tag.outputs.tag_name }}
           release_name: "Release ${{ steps.set_tag.outputs.tag_name }}"
           body: |
-            Base on commit ${{ github.sha }} and v2fly ${{ steps.set_tag.outputs.v2fly_tag_name }}
+            Base on commit ${{ github.sha }} and v2fly ${{ steps.set_tag.outputs.v2fly_tag_name }} and xray ${{ steps.set_tag.outputs.xray_tag_name }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
 
-      - name: Save Docker image to file
+      - name: Save V2Fly Docker image to file
         run: |
           docker pull --platform linux/amd64 v2fly/v2fly-core:${{ steps.set_tag.outputs.v2fly_tag_name }}
           docker save -o "v2fly-${{ steps.set_tag.outputs.v2fly_tag_name }}.tar" v2fly/v2fly-core:${{ steps.set_tag.outputs.v2fly_tag_name }}
 
-      - name: Upload Docker image
+      - name: Save Xray Docker image to file
+        run: |
+          docker pull --platform linux/amd64 teddysun/xray:${{ steps.set_tag.outputs.xray_tag_name }}
+          docker save -o "xray-${{ steps.set_tag.outputs.xray_tag_name }}.tar" teddysun/xray:${{ steps.set_tag.outputs.xray_tag_name }}
+
+      - name: Upload V2Fly Docker image
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: v2fly-${{ steps.set_tag.outputs.v2fly_tag_name }}.tar
           asset_name: v2fly-${{ steps.set_tag.outputs.v2fly_tag_name }}.tar
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
+
+      - name: Upload Xray Docker image
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: xray-${{ steps.set_tag.outputs.xray_tag_name }}.tar
+          asset_name: xray-${{ steps.set_tag.outputs.xray_tag_name }}.tar
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
