@@ -110,7 +110,7 @@ class ProtocolA:
 
             """
             method_uuid, addr, port = re.split(r"[:@]", header)
-            method, uuid = base64_decode(method_uuid).split(":")
+            method, uuid = base64_decode(method_uuid).split(":", 1)
             note = self._remove_code(urllib.parse.unquote(footer))
 
         return {
