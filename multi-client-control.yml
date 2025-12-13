@@ -91,6 +91,19 @@
           delegate_to: "{{ inventory_hostname }}"
           when: v2fly_stat.stat.exists
 
+        - name: Check if xray.tar exists
+          stat:
+            path: xray.tar
+          delegate_to: localhost
+          register: xray_stat
+
+        - name: Copy xray.tar inoto inventory_hostname if it exists
+          copy:
+            src: xray.tar
+            dest: /tmp/xray.tar
+          delegate_to: "{{ inventory_hostname }}"
+          when: xray_stat.stat.exists
+
         - name: Copy sha256 files into inventory_hostname
           copy:
             src: utils/sha256/{{ item }}.sha256
