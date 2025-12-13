@@ -40,13 +40,23 @@
           delegate_to: localhost
           loop: "{{ subscribe }}"
 
-        - name: Generate the config files locally
+        - name: Generate the local config files from URL
           command: >
             python3 ./utils/sub2json.py
             -s "{{ item.url }}"
             -o "{{ item.dir }}"
           delegate_to: localhost
           loop: "{{ subscribe }}"
+          when: item.raw is not defined or item.raw | length == 0
+
+        - name: Generate the local config files from raw
+          command: >
+            python3 ./utils/sub2json.py
+            -r "{{ item.raw }}"
+            -o "{{ item.dir }}"
+          delegate_to: localhost
+          loop: "{{ subscribe }}"
+          when: item.raw is defined and item.raw | length > 0
 
     - name: Generate config file
       when: status == 'on'
