@@ -321,6 +321,39 @@ class Sub2Json:
         return data
 
 
+def canonical(v):
+    import math
+
+    if isinstance(v, dict):
+        return tuple((k, canonical(v[k])) for k in sorted(v))
+
+    if isinstance(v, (list, tuple, set)):
+        return tuple(sorted(canonical(x) for x in v))
+
+    if isinstance(v, float):
+        if math.isnan(v):
+            return ("NaN",)
+        return round(v, 8)
+
+    if isinstance(v, bytes):
+        return ("bytes", v.hex())
+
+    return v
+
+
+def dedup_dicts(dicts, exclude_keys=("index", "note")):
+    seen = set()
+    result = []
+
+    for d in dicts:
+        key = canonical({k: d[k] for k in d if k not in exclude_keys})
+        if key not in seen:
+            seen.add(key)
+            result.append(d)
+
+    return result
+
+
 def args_parse():
 
     example_commands = (
@@ -386,7 +419,8 @@ def main():
             f.write(data)
 
     count = 0
-    for server in Sub2Json(data).decode():
+    servers = dedup_dicts(Sub2Json(data).decode(), ("note"))
+    for server in servers:
         count += 1
         filename = os.path.join(args.outdir, f"server{count:02d}.json")
         with open(filename, "w", encoding="utf-8") as f:
